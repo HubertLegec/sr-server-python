@@ -1,0 +1,7 @@
+version: '2'
+services:
+  server:
+    container_name: srPythonServer
+    build: ./server
+    ports:
+    - "3000:3000"
