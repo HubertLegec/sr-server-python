@@ -1,4 +1,5 @@
 from flask_restful import Resource
+from flask import jsonify, request
 
 
 class Files(Resource):
@@ -6,13 +7,20 @@ class Files(Resource):
         self.directory_controller = kwargs['directory_controller']
 
     def get(self):
-        return self.directory_controller.get_files_list()
+        files_list = self.directory_controller.get_files()
+        names = [f.get_name() for f in files_list]
+        return jsonify(names)
 
     def post(self):
-        name = 'file1'
+        request_body = request.get_json()
+        name = request_body['filename']
         self.directory_controller.create_file(name)
-        return 'OK'
+        return jsonify({
+            'message': ('File with name ' + name + ' created.')
+        })
 
     def delete(self, name):
         self.directory_controller.delete_file(name)
-        return 'OK'
+        return jsonify({
+            'message': 'File with name ' + name + ' removed.'
+        })
