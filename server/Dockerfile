@@ -13,6 +13,6 @@ CMD ["ls -la"]
 
 ENTRYPOINT ["python"]
 
-EXPOSE 3000
+EXPOSE 4200
 
 CMD ["app.py"]

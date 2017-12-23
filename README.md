@@ -20,9 +20,9 @@ There are two possible options to run the project:
 ### Standalone mode
 * Go to ```server``` directory
 * Run ```python app.py```
-Server should be available under ```localhost:3000```
+Server should be available under ```localhost:4200```
 
 ### Docker mode
 * Go to root project directory
 * Run ```docker-compose up``` command
-Server should be available under ```localhost:3000```
+Server should be available under ```localhost:4200```
