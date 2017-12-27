@@ -5,6 +5,7 @@ class File:
     def __init__(self, name):
         self.__name = name
         self.__records = []
+        self.__opened_by = []
 
     def get_name(self):
         return self.__name
@@ -27,6 +28,18 @@ class File:
         record.set_content(content)
         self.__records.append(record)
         return rec_id
+
+    def add_opened_by(self, user):
+        if user not in self.__opened_by:
+            self.__opened_by.append(user)
+            return True
+        return False
+
+    def get_opened_by(self):
+        return self.__opened_by
+
+    def remove_opened_by(self, user):
+        self.__opened_by = [o for o in self.__opened_by if o != user]
 
     def __get_next_record_id(self):
         if len(self.__records) == 0:
