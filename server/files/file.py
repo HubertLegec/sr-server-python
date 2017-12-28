@@ -27,7 +27,7 @@ class File:
         record = Record(rec_id)
         record.set_content(content)
         self.__records.append(record)
-        return rec_id
+        return record
 
     def add_opened_by(self, user):
         if user not in self.__opened_by:

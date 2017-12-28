@@ -12,7 +12,8 @@ from clients import ClientController
 app = Flask('File Server')
 CORS(app)
 app.config['SECRET_KEY'] = 'Secret!!!'
-clients_controller = ClientController()
+socketio = SocketIO(app)
+clients_controller = ClientController(socketio)
 dir_controller = DirectoryController(clients_controller)
 file_controller = FileController(dir_controller, clients_controller)
 api = Api(app)
@@ -26,7 +27,6 @@ api.add_resource(
     '/files/<string:name>/records', '/files/<string:name>/records/<int:record_id>',
     resource_class_kwargs={'file_controller': file_controller}
 )
-socketio = SocketIO(app)
 
 
 @app.route('/health')

@@ -1,12 +1,11 @@
 import pytest
-
 from . import File
 
 
 def test_file_creates_records():
     file = File('file 1')
     content = 'record content'
-    id = file.create_record(content)
+    id = file.create_record(content).get_id()
 
     assert file.get_record(id).get_content() == content
 

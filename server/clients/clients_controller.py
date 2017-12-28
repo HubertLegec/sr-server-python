@@ -1,10 +1,10 @@
 from . import Client
-from flask_socketio import emit
 
 
 class ClientController:
-    def __init__(self):
+    def __init__(self, socketio):
         self.__clients = []
+        self.__socketio = socketio
 
     def register_client(self, sid):
         self.__clients.append(Client(sid))
@@ -16,10 +16,10 @@ class ClientController:
     def remove_client(self, sid):
         self.__clients = [c for c in self.__clients if c.get_sid() != sid]
 
-    def emit(self, clients, event_name, event_body = None):
+    def emit(self, clients, event_name, event_body=None):
         for client_name in clients:
             client = self.get_client_by_name(client_name)
-            emit(event_name, event_body, room=client.get_login())
+            self.__socketio.emit(event_name, event_body, room=client.get_login())
 
     def get_client_by_name(self, name):
         return next(c for c in self.__clients if c.get_login() == name)
