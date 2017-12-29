@@ -13,5 +13,5 @@ def test_file_creates_records():
 def test_error_when_record_not_found():
     file = File('file 1')
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(FileNotFoundError):
         file.get_record(1)
