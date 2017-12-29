@@ -16,11 +16,16 @@ class File:
     def get_record(self, record_id):
         filtered = [r for r in self.__records if r.get_id() == record_id]
         if len(filtered) == 0:
-            raise RuntimeError("Record #" + str(record_id) + " not found")
+            raise FileNotFoundError("Record #" + str(record_id) + " not found")
         return filtered[0]
 
-    def delete_record(self, record_id):
-        self.__records = [r for r in self.__records if r.get_id() != record_id]
+    def delete_record(self, record_id, user_id):
+        record = self.get_record(record_id)
+        locked_by = record.get_locked_by()
+        if locked_by == user_id:
+            self.__records = [r for r in self.__records if r.get_id() != record_id]
+        else:
+            raise PermissionError("Delete not allowed, user " + user_id + " has no rights for record")
 
     def create_record(self, content):
         rec_id = self.__get_next_record_id()
@@ -28,6 +33,14 @@ class File:
         record.set_content(content)
         self.__records.append(record)
         return record
+
+    def edit_record(self, record_id, content, user_id):
+        record = self.get_record(record_id)
+        locked_by = record.get_locked_by()
+        if locked_by == user_id:
+            record.set_content(content)
+        else:
+            raise PermissionError("Edit not allowed, user " + user_id + " has no rights for record")
 
     def add_opened_by(self, user):
         if user not in self.__opened_by:
@@ -40,6 +53,14 @@ class File:
 
     def remove_opened_by(self, user):
         self.__opened_by = [o for o in self.__opened_by if o != user]
+
+    def lock_record(self, user, record_id):
+        record = self.get_record(record_id)
+        return record.lock(user)
+
+    def unlock_record(self, user, record_id):
+        record = self.get_record(record_id)
+        return record.unlock(user)
 
     def __get_next_record_id(self):
         if len(self.__records) == 0:

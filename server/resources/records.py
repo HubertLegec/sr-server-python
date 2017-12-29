@@ -8,7 +8,8 @@ class Records(Resource):
 
     def get(self, name):
         records = self.file_controller.get_records(name)
-        mapped_records = [{'id': r.get_id(), 'content': r.get_content()} for r in records]
+        user_id = request.headers['userId']
+        mapped_records = [Records.__record_to_json(r, user_id, name) for r in records]
         return jsonify(mapped_records)
 
     def post(self, name):
@@ -22,8 +23,8 @@ class Records(Resource):
         })
 
     def put(self, name, record_id):
-        req_body = request.get_json()
         user_id = request.headers['userId']
+        req_body = request.get_json()
         content = req_body['content']
         self.file_controller.update_record(name, record_id, content, user_id)
         return jsonify({
@@ -37,3 +38,8 @@ class Records(Resource):
             'message': 'Record #%d in file %s removed' % (record_id, name)
         })
 
+    @staticmethod
+    def __record_to_json(record, user_id, filename):
+        locked_by = record.get_locked_by()
+        state = 'EDITING' if locked_by == user_id else 'AVAILABLE'  # TODO waiting status
+        return {'id': record.get_id(), 'content': record.get_content(), 'status': state, 'filename': filename}

@@ -1,13 +1,14 @@
-from flask import Flask, jsonify, session, request
+from flask import Flask, jsonify, request
 from flask_restful import Api
 from flask_socketio import SocketIO, join_room
 from flask_cors import CORS
 
-from files import DirectoryController
-from files import FileController
-from resources import Files
-from resources import Records
-from clients import ClientController
+from server.files import DirectoryController
+from server.files import FileController
+from server.resources import Files
+from server.resources import Records
+from server.clients import ClientController
+from server.utils import LogFactory
 
 app = Flask('File Server')
 CORS(app)
@@ -28,24 +29,53 @@ api.add_resource(
     resource_class_kwargs={'file_controller': file_controller}
 )
 
+logger = LogFactory.get_logger()
+
 
 @app.route('/health')
 def health_check():
     return jsonify('OK')
 
 
+@app.errorhandler(PermissionError)
+def handle_permission_error(error):
+    response = jsonify({
+        'message': str(error)
+    })
+    response.status_code = 403
+    return response
+
+
+@app.errorhandler(FileNotFoundError)
+def handle_not_found_error(error):
+    response = jsonify({
+        'message': str(error)
+    })
+    response.status_code = 404
+    return response
+
+
+@app.errorhandler(FileExistsError)
+def handle_exist_error(error):
+    response = jsonify({
+        'message': str(error)
+    })
+    response.status_code = 409
+    return response
+
+
 @socketio.on('connect')
 def connect_handler():
     sid = request.sid
     clients_controller.register_client(sid)
-    print("New user connected")
+    logger.info('New user #%s connected', sid)
 
 
 @socketio.on('disconnect')
 def disconnect_handler():
     sid = request.sid
     clients_controller.remove_client(sid)
-    print("User disconnected")
+    logger.info('User #%s disconnected', sid)
 
 
 @socketio.on('authorize')
@@ -54,7 +84,7 @@ def authorize_handler(json):
     sid = request.sid
     join_room(login)
     clients_controller.set_login_for_client(sid, login)
-    print("User authorized: " + login)
+    logger.info('User #%s authorized with login: %s', sid, login)
 
 
 @socketio.on('file_state_change')
@@ -62,7 +92,7 @@ def file_event_handler(json):
     event_type = json['eventType']
     filename = json['file']
     username = json['userId']
-    print("Event: " + event_type + " for file: " + filename + " send by: " + username)
+    logger.info("Event: %s for file: %s send by: %s", event_type, filename, username)
     if event_type == "OPEN_FILE":
         dir_controller.add_opened_by(filename, username)
     elif event_type == "CLOSE_FILE":
@@ -74,10 +104,14 @@ def file_event_handler(json):
 @socketio.on('record_state_change')
 def record_event_handler(json):
     event_type = json['eventType']
-    file_name = json['file']
+    filename = json['file']
     record_id = json['record']
     username = json['userId']
-    print("Event: " + event_type + " for record #" + str(record_id) + " in file: " + file_name + " by user: " + username)
+    if event_type == "LOCK_RECORD":
+        file_controller.lock_record(filename, record_id, username)
+    elif event_type == "UNLOCK_RECORD":
+        file_controller.unlock_record(filename, record_id, username)
+    logger.info("Event: %s for record #%d in file: %s by user: %s", event_type, record_id, filename, username)
 
 
 def start(host='0.0.0.0', port=4200, debug=False):
