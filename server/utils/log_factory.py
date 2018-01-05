@@ -6,18 +6,21 @@ class LogFactory:
     FORMATTER = logging.Formatter('[%(asctime)s - %(name)s] %(levelname)s : %(message)s')
     DEFAULT_LOG_LEVEL = 'INFO'
     DEFAULT_LOG_FILE = 'logs'
+    log = None
 
     @classmethod
     def get_logger(cls, **kwargs):
-        log = logging.getLogger(cls.ROOT_LOGGER_NAME)
-        log.setLevel(logging.DEBUG)
+        if cls.log:
+            return cls.log
+        cls.log = logging.getLogger(cls.ROOT_LOGGER_NAME)
+        cls.log.setLevel(logging.DEBUG)
         fh = cls._get_file_logger(kwargs)
         ch = cls._get_console_logger(kwargs)
         if fh:
-            log.addHandler(fh)
+            cls.log.addHandler(fh)
         if ch:
-            log.addHandler(ch)
-        return log
+            cls.log.addHandler(ch)
+        return cls.log
 
     @classmethod
     def _get_file_logger(cls, kwargs):
