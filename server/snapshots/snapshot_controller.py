@@ -13,11 +13,7 @@ class SnapshotController:
         self.snapshot_builder = SnapshotBuilder(dir_controller)
         self.servers = servers
         self.requests_queue = Queue()
-        self.snapshot_creator_worker = Thread(
-            target=SnapshotController.process_requests,
-            args=(self.snapshot_builder, self.requests_queue)
-        )
-        self.snapshot_creator_worker.setDaemon(True)
+        self.snapshot_creator_worker = self.__create_snapshot_creator_worker()
 
     def start(self):
         self.log.info('Start snapshot controller')
@@ -39,5 +35,13 @@ class SnapshotController:
                 log.info('Snapshot #' + str(snapshot_id) + ' send back')
             else:
                 log.error('Error during posting snapshot #' + snapshot_id + ' on url: ' + url + ', response: ' + str(resp.status_code) + ' ' + resp.reason)
+
+    def __create_snapshot_creator_worker(self):
+        worker = Thread(
+            target=SnapshotController.process_requests,
+            args=(self.snapshot_builder, self.requests_queue)
+        )
+        worker.setDaemon(True)
+        return worker
 
 

@@ -2,6 +2,6 @@ version: '2'
 services:
   server:
     container_name: srPythonServer
-    build: ./server
+    build: .
     ports:
     - "4200:4200"

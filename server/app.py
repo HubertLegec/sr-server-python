@@ -96,8 +96,3 @@ def start(params):
     debug = params.debug
     app, socketio = configure(configuration.get_servers())
     socketio.run(app, host, port, debug=debug)
-
-
-if __name__ == '__main__':
-    parameters = parse_parameters('config.json')
-    start(parameters)

@@ -9,10 +9,6 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
-CMD ["ls -la"]
-
-ENTRYPOINT ["python"]
-
 EXPOSE 4200
 
-CMD ["app.py"]
+ENTRYPOINT ["python", "run.py"]

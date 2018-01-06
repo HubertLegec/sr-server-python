@@ -83,7 +83,13 @@ class FileController:
         self.log.info('Removing user: ' + user_id + ' who locked record #' + record_id + ' in file: ' + filename)
         file = self.directory_controller.get_file(filename)
         record = file.get_record(record_id)
-        return record.remove_waiting_user(user_id, timestamp)
+        user_removed = record.remove_waiting_user(user_id, timestamp)
+        if user_removed:
+            self.__notify_specified_client(
+                user_id,
+                {'eventType': 'LOCK_REJECTED', 'recordId': record_id, 'filename': filename}
+            )
+        return user_removed
 
     def __notify_clients(self, file, current_user, body):
         opened_by = [c for c in file.get_opened_by() if c != current_user]

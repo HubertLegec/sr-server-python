@@ -1,4 +1,4 @@
 version: '2'
 services:
   server:
-    volumes: ["./server:/app"]
+    volumes: [".:/app"]
