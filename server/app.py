@@ -1,43 +1,28 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_restful import Api
-from flask_socketio import SocketIO, join_room
+from flask_socketio import SocketIO
 from flask_cors import CORS
 
 from server.files import DirectoryController
 from server.files import FileController
 from server.resources import Files
 from server.resources import Records
+from server.resources import Snapshots
+from server.resources import Clients
+from server.resources import WebsocketNamespace
+from server.snapshots import SnapshotController
 from server.clients import ClientController
-from server.utils import LogFactory
+from server.utils import LogFactory, parse_parameters, ConfigLoader
 
+app_configured = False
 app = Flask('File Server')
 CORS(app)
 app.config['SECRET_KEY'] = 'Secret!!!'
+app.config['TRAP_HTTP_EXCEPTIONS'] = True
 socketio = SocketIO(app)
-clients_controller = ClientController(socketio)
-dir_controller = DirectoryController(clients_controller)
-file_controller = FileController(dir_controller, clients_controller)
-api = Api(app)
-api.add_resource(
-    Files,
-    '/files', '/files/<string:name>',
-    resource_class_kwargs={'directory_controller': dir_controller}
-)
-api.add_resource(
-    Records,
-    '/files/<string:name>/records', '/files/<string:name>/records/<int:record_id>',
-    resource_class_kwargs={'file_controller': file_controller}
-)
-
 logger = LogFactory.get_logger()
 
 
-@app.route('/health')
-def health_check():
-    return jsonify('OK')
-
-
-@app.errorhandler(PermissionError)
 def handle_permission_error(error):
     response = jsonify({
         'message': str(error)
@@ -46,7 +31,6 @@ def handle_permission_error(error):
     return response
 
 
-@app.errorhandler(FileNotFoundError)
 def handle_not_found_error(error):
     response = jsonify({
         'message': str(error)
@@ -55,7 +39,6 @@ def handle_not_found_error(error):
     return response
 
 
-@app.errorhandler(FileExistsError)
 def handle_exist_error(error):
     response = jsonify({
         'message': str(error)
@@ -64,59 +47,57 @@ def handle_exist_error(error):
     return response
 
 
-@socketio.on('connect')
-def connect_handler():
-    sid = request.sid
-    clients_controller.register_client(sid)
-    logger.info('New user #%s connected', sid)
+def configure(servers):
+    global app, app_configured, socketio
+    if app_configured:
+        return app, socketio
+    clients_controller = ClientController(socketio)
+    dir_controller = DirectoryController(clients_controller)
+    file_controller = FileController(dir_controller, clients_controller)
+    snapshot_controller = SnapshotController(dir_controller, servers)
+    snapshot_controller.start()
+    handle_exception = app.handle_exception
+    handle_user_exception = app.handle_user_exception
+    api = Api(app)
+    app.handle_exception = handle_exception
+    app.handle_user_exception = handle_user_exception
+    api.add_resource(
+        Files,
+        '/files', '/files/<string:name>',
+        resource_class_kwargs={'directory_controller': dir_controller}
+    )
+    api.add_resource(
+        Records,
+        '/files/<string:name>/records', '/files/<string:name>/records/<int:record_id>',
+        resource_class_kwargs={'file_controller': file_controller}
+    )
+    api.add_resource(
+        Snapshots,
+        '/snapshots/<string:snapshot_id>',
+        resource_class_kwargs={'snapshot_controller': snapshot_controller}
+    )
+    api.add_resource(
+        Clients,
+        '/files/<string:name>/records/<int:record_id>/clients',
+        resource_class_kwargs={'file_controller': file_controller}
+    )
+    app.register_error_handler(PermissionError, handle_permission_error)
+    app.register_error_handler(FileNotFoundError, handle_not_found_error)
+    app.register_error_handler(FileExistsError, handle_exist_error)
+    socketio.on_namespace(WebsocketNamespace(clients_controller, dir_controller, file_controller))
+    app_configured = True
+    return app, socketio
 
 
-@socketio.on('disconnect')
-def disconnect_handler():
-    sid = request.sid
-    clients_controller.remove_client(sid)
-    logger.info('User #%s disconnected', sid)
-
-
-@socketio.on('authorize')
-def authorize_handler(json):
-    login = json['userId']
-    sid = request.sid
-    join_room(login)
-    clients_controller.set_login_for_client(sid, login)
-    logger.info('User #%s authorized with login: %s', sid, login)
-
-
-@socketio.on('file_state_change')
-def file_event_handler(json):
-    event_type = json['eventType']
-    filename = json['file']
-    username = json['userId']
-    logger.info("Event: %s for file: %s send by: %s", event_type, filename, username)
-    if event_type == "OPEN_FILE":
-        dir_controller.add_opened_by(filename, username)
-    elif event_type == "CLOSE_FILE":
-        dir_controller.remove_opened_by(filename, username)
-    else:
-        raise ValueError("Invalid eventType")
-
-
-@socketio.on('record_state_change')
-def record_event_handler(json):
-    event_type = json['eventType']
-    filename = json['file']
-    record_id = json['record']
-    username = json['userId']
-    if event_type == "LOCK_RECORD":
-        file_controller.lock_record(filename, record_id, username)
-    elif event_type == "UNLOCK_RECORD":
-        file_controller.unlock_record(filename, record_id, username)
-    logger.info("Event: %s for record #%d in file: %s by user: %s", event_type, record_id, filename, username)
-
-
-def start(host='0.0.0.0', port=4200, debug=False):
+def start(params):
+    configuration = ConfigLoader(params.config, params.server)
+    host = configuration.get_server_host()
+    port = configuration.get_server_port()
+    debug = params.debug
+    app, socketio = configure(configuration.get_servers())
     socketio.run(app, host, port, debug=debug)
 
 
 if __name__ == '__main__':
-    start(debug=True)
+    parameters = parse_parameters('config.json')
+    start(parameters)

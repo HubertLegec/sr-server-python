@@ -19,6 +19,6 @@ class SnapshotBuilder:
     @classmethod
     def __create_record_snapshot(cls, record):
         return {
-            'lockedBy': record.get_locked_by().get_user() if record.get_locked_by() else None,
+            'lockedBy': record.get_locked_by(),
             'waiting': [u.to_dictionary() for u in record.get_waiting_users()]
         }

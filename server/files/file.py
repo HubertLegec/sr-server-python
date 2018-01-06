@@ -1,7 +1,10 @@
+from server.utils import LogFactory
 from . import Record
 
 
 class File:
+    log = LogFactory.get_logger()
+
     def __init__(self, name):
         self.__name = name
         self.__records = []
@@ -25,7 +28,9 @@ class File:
         if locked_by == user_id:
             self.__records = [r for r in self.__records if r.get_id() != record_id]
         else:
-            raise PermissionError("Delete not allowed, user " + user_id + " has no rights for record")
+            msg = "Delete not allowed, user " + user_id + " has no rights for record"
+            self.log.error(msg)
+            raise PermissionError(msg)
 
     def create_record(self, content):
         rec_id = self.__get_next_record_id()
@@ -40,7 +45,9 @@ class File:
         if locked_by == user_id:
             record.set_content(content)
         else:
-            raise PermissionError("Edit not allowed, user " + user_id + " has no rights for record")
+            msg = "Edit not allowed, user " + user_id + " has no rights for record"
+            self.log.error(msg)
+            raise PermissionError(msg)
 
     def add_opened_by(self, user):
         if user not in self.__opened_by:
@@ -55,10 +62,12 @@ class File:
         self.__opened_by = [o for o in self.__opened_by if o != user]
 
     def lock_record(self, user, record_id):
+        self.log.info("Lock record #" + str(record_id) + " for user: " + user)
         record = self.get_record(record_id)
         return record.lock(user)
 
     def unlock_record(self, user, record_id):
+        self.log.info("Unlock record #" + str(record_id) + " locked by: " + user)
         record = self.get_record(record_id)
         return record.unlock(user)
 
