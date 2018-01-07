@@ -27,3 +27,9 @@ class Queue:
         size_after = self.size()
         self.__lock.release()
         return size_before != size_after
+
+    def get_as_list(self):
+        self.__lock.acquire()
+        result = [i for i in self.__queue]
+        self.__lock.release()
+        return result

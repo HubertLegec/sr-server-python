@@ -48,5 +48,5 @@ class Record:
         return self.__lock_queue.remove_by(lambda u: u.get_user() == user_id and u.get_timestamp() == timestamp)
 
     def get_waiting_users(self):
-        return [u for u in self.__lock_queue.queue]
+        return [u for u in self.__lock_queue.get_as_list()]
 

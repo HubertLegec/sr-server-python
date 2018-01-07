@@ -10,9 +10,9 @@ from server.resources import Records
 from server.resources import Snapshots
 from server.resources import Clients
 from server.resources import WebsocketNamespace
-from server.snapshots import SnapshotController
+from server.snapshots import SnapshotBuilder
 from server.clients import ClientController
-from server.utils import LogFactory, parse_parameters, ConfigLoader
+from server.utils import LogFactory, ConfigLoader
 
 app_configured = False
 app = Flask('File Server')
@@ -54,8 +54,7 @@ def configure(servers):
     clients_controller = ClientController(socketio)
     dir_controller = DirectoryController(clients_controller)
     file_controller = FileController(dir_controller, clients_controller)
-    snapshot_controller = SnapshotController(dir_controller, servers)
-    snapshot_controller.start()
+    snapshot_builder = SnapshotBuilder(dir_controller)
     handle_exception = app.handle_exception
     handle_user_exception = app.handle_user_exception
     api = Api(app)
@@ -74,7 +73,7 @@ def configure(servers):
     api.add_resource(
         Snapshots,
         '/snapshots/<string:snapshot_id>',
-        resource_class_kwargs={'snapshot_controller': snapshot_controller}
+        resource_class_kwargs={'snapshot_builder': snapshot_builder}
     )
     api.add_resource(
         Clients,
