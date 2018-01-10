@@ -21,8 +21,13 @@ class ClientController:
             client = self.get_client_by_name(client_name)
             self.__socketio.emit(event_name, event_body, room=client.get_login())
 
+    def get_client_by_sid(self, sid):
+        matching_clients = [c for c in self.__clients if c.get_sid() == sid]
+        return matching_clients[0] if len(matching_clients) > 0 else None
+
     def get_client_by_name(self, name):
-        return next(c for c in self.__clients if c.get_login() == name)
+        matching_clients = [c for c in self.__clients if c.get_login() == name]
+        return matching_clients[0] if len(matching_clients) > 0 else None
 
     def get_all_clients(self):
         return self.__clients

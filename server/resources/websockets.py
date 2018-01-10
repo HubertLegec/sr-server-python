@@ -20,7 +20,10 @@ class WebsocketNamespace(Namespace):
 
     def on_disconnect(self):
         sid = request.sid
-        self.clients_controller.remove_client(sid)
+        client = self.clients_controller.get_client_by_sid(sid)
+        if client:
+            self.dir_controller.disconnect_user(client.get_login())
+            self.clients_controller.remove_client(sid)
         self.log.info('User #%s disconnected', sid)
 
     def on_authorize(self, json):

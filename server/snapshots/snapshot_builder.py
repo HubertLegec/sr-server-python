@@ -14,7 +14,7 @@ class SnapshotBuilder:
     @classmethod
     def __create_file_snapshot(cls, file):
         records = file.get_records()
-        return {r.get_id(): cls.__create_record_snapshot(r) for r in records}
+        return {r.get_id(): cls.__create_record_snapshot(r) for r in records if r.get_locked_by() is not None}
 
     @classmethod
     def __create_record_snapshot(cls, record):

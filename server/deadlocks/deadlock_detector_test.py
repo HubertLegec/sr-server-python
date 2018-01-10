@@ -1,4 +1,4 @@
-from . import DeadlockController
+from . import DeadlockDetector
 
 
 def test_create_wait_for_graph():
@@ -22,7 +22,7 @@ def test_create_wait_for_graph():
         }
     }]
 
-    wait_for_graph = DeadlockController.build_wait_for_graph(snapshots)
+    wait_for_graph = DeadlockDetector.build_wait_for_graph(snapshots)
     assert len(wait_for_graph.keys()) == 5
     assert wait_for_graph['U1'] == ['U4', 'U5']
     assert wait_for_graph['U2'] == ['U4']
@@ -35,14 +35,14 @@ def test_find_simple_cycle():
     graph = {
         '1': ['2'], '2': ['3'], '3': ['1']
     }
-    path_exists, path = DeadlockController.find_cycle(graph)
+    path_exists, path = DeadlockDetector.find_cycle(graph)
     assert path_exists
     assert path == ['1', '2', '3']
 
     graph2 = {
         '1': ['2', '3'], '2': ['3'], '3': []
     }
-    assert not DeadlockController.find_cycle(graph2)
+    assert not DeadlockDetector.find_cycle(graph2)
 
 
 def test_find_cycle():
@@ -53,6 +53,6 @@ def test_find_cycle():
         'U4': ['U5'],
         'U5': ['U1']
     }
-    path_exists, path = DeadlockController.find_cycle(graph)
+    path_exists, path = DeadlockDetector.find_cycle(graph)
     assert path_exists
     assert path == ['U1', 'U4', 'U5']

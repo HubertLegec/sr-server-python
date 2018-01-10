@@ -28,5 +28,8 @@ class ConfigLoader:
         servers = self.__get_all_servers()
         return servers[self.server_id]['port']
 
+    def get_detector_interval(self):
+        return self.config['detectorInterval']
+
     def __get_all_servers(self):
         return self.config['servers']

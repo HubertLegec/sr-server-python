@@ -3,6 +3,7 @@ from flask_restful import Api
 from flask_socketio import SocketIO
 from flask_cors import CORS
 
+from server.deadlocks import DeadlockController
 from server.files import DirectoryController
 from server.files import FileController
 from server.resources import Files
@@ -47,7 +48,7 @@ def handle_exist_error(error):
     return response
 
 
-def configure(servers):
+def configure(servers, detector_interval):
     global app, app_configured, socketio
     if app_configured:
         return app, socketio
@@ -55,6 +56,7 @@ def configure(servers):
     dir_controller = DirectoryController(clients_controller)
     file_controller = FileController(dir_controller, clients_controller)
     snapshot_builder = SnapshotBuilder(dir_controller)
+    deadlock_controller = DeadlockController(snapshot_builder, servers, detector_interval)
     handle_exception = app.handle_exception
     handle_user_exception = app.handle_user_exception
     api = Api(app)
@@ -85,7 +87,7 @@ def configure(servers):
     app.register_error_handler(FileExistsError, handle_exist_error)
     socketio.on_namespace(WebsocketNamespace(clients_controller, dir_controller, file_controller))
     app_configured = True
-    return app, socketio
+    return app, socketio, deadlock_controller
 
 
 def start(params):
@@ -93,5 +95,6 @@ def start(params):
     host = configuration.get_server_host()
     port = configuration.get_server_port()
     debug = params.debug
-    app, socketio = configure(configuration.get_servers())
+    app, socketio, deadlock_controller = configure(configuration.get_servers(), configuration.get_detector_interval())
+    deadlock_controller.run()
     socketio.run(app, host, port, debug=debug)

@@ -71,6 +71,12 @@ class File:
         record = self.get_record(record_id)
         return record.unlock(user)
 
+    def disconnect_user(self, user_id):
+        self.log.info("Disconnect user: " + user_id + " from file: " + self.get_name())
+        for r in self.get_records():
+            r.disconnect_user(user_id)
+        self.remove_opened_by(user_id)
+
     def __get_next_record_id(self):
         if len(self.__records) == 0:
             return 0

@@ -33,19 +33,24 @@ class Record:
             self.__locked_by = WaitingClient(user_id)
             return True
         else:
-            self.__lock_queue.put(user_id)
+            self.__lock_queue.put(WaitingClient(user_id))
             return False
 
     def unlock(self, user_id):
         if self.__locked_by and self.__locked_by.get_user() == user_id:
-            next_user = self.__lock_queue.pop()
-            self.__locked_by = next_user
-            return next_user
+            self.__locked_by = self.__lock_queue.pop()
+            return self.get_locked_by()
         else:
             raise PermissionError('Unlock not allowed, user ' + user_id + ' has no rights to record')
 
     def remove_waiting_user(self, user_id, timestamp):
         return self.__lock_queue.remove_by(lambda u: u.get_user() == user_id and u.get_timestamp() == timestamp)
+
+    def disconnect_user(self, user_id):
+        if self.get_locked_by() == user_id:
+            self.unlock(user_id)
+        else:
+            self.__lock_queue.remove_by(lambda u: u.get_user() == user_id)
 
     def get_waiting_users(self):
         return [u for u in self.__lock_queue.get_as_list()]

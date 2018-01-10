@@ -47,6 +47,11 @@ class DirectoryController:
         file = self.get_file(name)
         file.remove_opened_by(user)
 
+    def disconnect_user(self, user_id):
+        self.log.info("Disconnecting client from all files...")
+        for f in self.get_files():
+            f.disconnect_user(user_id)
+
     def __check_if_name_exists(self, name):
         filtered = [f for f in self.__files if f.get_name() == name]
         return len(filtered) > 0

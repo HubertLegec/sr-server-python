@@ -1,61 +1,55 @@
-import schedule
-import time
+from threading import Thread
+import requests
+import uuid
+
+from urllib3.exceptions import HTTPError
+
+from server.deadlocks import DeadlockDetector
+from server.utils import LogFactory, RepeatedTimer
+
+log = LogFactory.get_logger()
 
 
 class DeadlockController:
-    def __init__(self):
-        None
+    def __init__(self, snapshot_builder, servers, interval=10):
+        self.__main_thread = RepeatedTimer(interval, DeadlockController.check_deadlocks, snapshot_builder, servers)
 
     def run(self):
+        log.info('Run deadlock detector...')
+        self.__main_thread.start()
+
+    @staticmethod
+    def check_deadlocks(snapshot_builder, servers):
+        log.info('Check deadlocks...')
+        detector = DeadlockDetector()
+        snapshot_uuid = str(uuid.uuid4())
+        own_snapshot = snapshot_builder.create_snapshot(snapshot_uuid)
+        detector.add_snapshot(own_snapshot)
+        threads = [Thread(target=DeadlockController.get_snapshot_for_server, args=(s, detector, snapshot_uuid)) for s in servers]
+        DeadlockController.run_threads_for_result(threads)
+        cycle = detector.get_cycle()
+        if cycle is not None:
+            log.info('Cycle found !!!')
         None
 
     @staticmethod
-    def detect_deadlocks(self):
-        return None
-
-    @staticmethod
-    def build_wait_for_graph(snapshots):
-        graph = {}
-        for snapshot in snapshots:
-            files = snapshot.keys()
-            for file_name in files:
-                file = snapshot[file_name]
-                records = file.keys()
-                for record_id in records:
-                    record = file[record_id]
-                    locked_by = record['lockedBy']
-                    if locked_by:
-                        waiting = [u['userId'] for u in record['waiting']]
-                        for u in waiting:
-                            DeadlockController.add_to_graph(graph, u, locked_by)
-        return graph
-
-    @staticmethod
-    def add_to_graph(graph, v1, v2):
-        if v1 in graph:
-            graph[v1].append(v2)
-        else:
-            graph[v1] = [v2]
-
-    @staticmethod
-    def find_cycle(graph):
-        if len(graph.keys()) < 2:
-            return False
-        visited = set()
-        path = [object()]
-        path_set = set(path)
-        stack = [iter(graph)]
-        while stack:
-            for v in stack[-1]:
-                if v in path_set:
-                    return True, path[1:]
-                elif v not in visited:
-                    visited.add(v)
-                    path.append(v)
-                    path_set.add(v)
-                    stack.append(iter(graph.get(v, ())))
-                    break
+    def get_snapshot_for_server(server, detector, id):
+        server_address = server['host'] + ':' + str(server['port'])
+        log.info('Get snapshot ' + id + ' for server: ' + server_address)
+        url = 'http://' + server_address + '/snapshots/' + id
+        try:
+            resp = requests.get(url)
+            if resp.status_code == 200:
+                log.info('Snapshot fetched from server ' + server_address)
+                detector.add_snapshot(resp.json())
             else:
-                path_set.remove(path.pop())
-                stack.pop()
-        return False
+                log.error('Error occurred during fetching snapshot from server: ' + server_address)
+        except (OSError, HTTPError):
+            log.error('Error occurred during fetching snapshot from server: ' + server_address)
+
+    @staticmethod
+    def run_threads_for_result(threads):
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()

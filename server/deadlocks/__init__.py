@@ -1,1 +1,2 @@
+from .deadlock_detector import DeadlockDetector
 from .deadlock_controller import DeadlockController
