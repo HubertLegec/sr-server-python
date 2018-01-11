@@ -1,5 +1,5 @@
-from . import DeadlockDetector
-from . import SnapshotDescription
+from server.deadlocks import DeadlockDetector
+from server.deadlocks import SnapshotDescription
 
 
 def test_create_wait_for_graph():

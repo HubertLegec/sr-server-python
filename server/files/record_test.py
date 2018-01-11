@@ -1,5 +1,5 @@
 import pytest
-from . import Record
+from server.files import Record
 
 
 def test_lock_by_single_user():
