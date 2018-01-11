@@ -18,5 +18,5 @@ class WaitingClient:
     def to_dictionary(self):
         return {
             'userId': self.__user_id,
-            'timestamp': self.__timestamp
+            'timestamp': self.__timestamp.isoformat()
         }

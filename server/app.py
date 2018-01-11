@@ -56,7 +56,7 @@ def configure(servers, detector_interval):
     dir_controller = DirectoryController(clients_controller)
     file_controller = FileController(dir_controller, clients_controller)
     snapshot_builder = SnapshotBuilder(dir_controller)
-    deadlock_controller = DeadlockController(snapshot_builder, servers, detector_interval)
+    deadlock_controller = DeadlockController(file_controller, snapshot_builder, servers, detector_interval)
     handle_exception = app.handle_exception
     handle_user_exception = app.handle_user_exception
     api = Api(app)
