@@ -5,7 +5,7 @@ from server.deadlocks import SnapshotDescription
 def test_create_wait_for_graph():
     s1 = {
         'f1': {
-            'r1': {
+            '1': {
                 'lockedBy': 'U4',
                 'waiting': [
                     {'userId': 'U1', 'timestamp': '2017-01-03T14:50:02'},
@@ -13,7 +13,7 @@ def test_create_wait_for_graph():
                     {'userId': 'U3', 'timestamp': '2017-01-03T14:52:12'}
                 ]
             },
-            'r2': {
+            '2': {
                 'lockedBy': 'U5',
                 'waiting': [
                     {'userId': 'U4', 'timestamp': '2017-01-03T14:53:09'},
@@ -24,14 +24,14 @@ def test_create_wait_for_graph():
     }
     s2 = {
         'f1': {
-            'r1': {
+            '1': {
                 'lockedBy': 'U1',
                 'waiting': [
                     {'userId': 'U5', 'timestamp': '2017-01-03T14:52:07'},
                     {'userId': 'U3', 'timestamp': '2017-01-03T14:53:01'}
                 ]
             },
-            'r2': {
+            '2': {
                 'lockedBy': 'U4',
                 'waiting': [
                     {'userId': 'U1', 'timestamp': '2017-01-03T14:58:00'}
