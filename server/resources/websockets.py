@@ -1,4 +1,4 @@
-from flask_socketio import Namespace, join_room
+from flask_socketio import Namespace, join_room, leave_room, close_room
 from flask import request
 
 from server.utils import LogFactory
@@ -24,6 +24,8 @@ class WebsocketNamespace(Namespace):
         if client:
             self.dir_controller.disconnect_user(client.get_login())
             self.clients_controller.remove_client(sid)
+            close_room(client.get_login())
+            self.log.info('Room ' + client.get_login() + ' removed')
         self.log.info('User #%s disconnected', sid)
 
     def on_authorize(self, json):

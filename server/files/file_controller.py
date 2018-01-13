@@ -82,14 +82,20 @@ class FileController:
 
     def remove_user_from_queue(self, filename, record_id, user_id, timestamp):
         self.log.info('Removing user: ' + user_id + ' who locked record #' + str(record_id) + ' in file: ' + filename)
+        assert isinstance(filename, str)
+        assert isinstance(record_id, int)
+        assert isinstance(user_id, str)
         file = self.directory_controller.get_file(filename)
         record = file.get_record(record_id)
         user_removed = record.remove_waiting_user(user_id, parser.parse(timestamp))
         if user_removed:
+            self.log.info('User: ' + user_id + ' removed from record #' + str(record_id) + ' in file: ' + filename)
             self.__notify_specified_client(
                 user_id,
                 {'eventType': 'LOCK_REJECTED', 'recordId': record_id, 'filename': filename}
             )
+        else:
+            self.log.warn('User: ' + user_id + ' not removed from record #' + str(record_id) + ' in file: ' + filename)
         return user_removed
 
     def __notify_clients(self, file, current_user, body):

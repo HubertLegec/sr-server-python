@@ -1,5 +1,6 @@
 import sys
 from server.utils import Queue
+from datetime import datetime
 
 from . import WaitingClient
 
@@ -44,6 +45,7 @@ class Record:
             raise PermissionError('Unlock not allowed, user ' + user_id + ' has no rights to record')
 
     def remove_waiting_user(self, user_id, timestamp):
+        assert isinstance(timestamp, datetime)
         return self.__lock_queue.remove_by(lambda u: u.get_user() == user_id and u.get_timestamp() == timestamp)
 
     def disconnect_user(self, user_id):
