@@ -7,9 +7,9 @@ class DirectoryController:
     log = LogFactory.get_logger()
 
     def __init__(self, clients_controller, dir_name):
-        self.__files = []
         self.__system_files_controller = SystemFilesController(dir_name)
         self.__clients_controller = clients_controller
+        self.__files = self.__system_files_controller.get_all_files()
 
     def get_files(self):
         return self.__files

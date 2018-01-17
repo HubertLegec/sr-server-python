@@ -1,5 +1,6 @@
-import os
+from os import path, makedirs, remove, listdir
 
+from server.files import File
 from server.utils import LogFactory
 
 
@@ -11,9 +12,9 @@ class SystemFilesController:
         self.ensure_dir_exists()
 
     def ensure_dir_exists(self):
-        if not os.path.isdir(self.__dir_path):
+        if not path.isdir(self.__dir_path):
             self.log.info('Create files dir: ' + self.__dir_path)
-            os.makedirs(self.__dir_path)
+            makedirs(self.__dir_path)
         else:
             self.log.info('Files directory already exists: ' + self.__dir_path)
 
@@ -23,10 +24,11 @@ class SystemFilesController:
         file.close()
 
     def delete_file(self, filename):
-        os.remove(self.__create_file_path(filename))
+        remove(self.__create_file_path(filename))
 
     def get_all_files(self):
-        None
+        names = [f for f in listdir(self.__dir_path) if path.isfile(self.__create_file_path(f))]
+        return [File(n) for n in names]
 
     def __create_file_path(self, filename):
-        return self.__dir_path + "/" + filename
+        return path.join(self.__dir_path, filename)
