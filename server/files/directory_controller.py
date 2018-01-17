@@ -1,3 +1,4 @@
+from server.files import SystemFilesController
 from server.utils import LogFactory
 from . import File
 
@@ -5,8 +6,9 @@ from . import File
 class DirectoryController:
     log = LogFactory.get_logger()
 
-    def __init__(self, clients_controller):
+    def __init__(self, clients_controller, dir_name):
         self.__files = []
+        self.__system_files_controller = SystemFilesController(dir_name)
         self.__clients_controller = clients_controller
 
     def get_files(self):
@@ -25,6 +27,7 @@ class DirectoryController:
             raise FileExistsError("File with name " + name + " already exists")
         file = File(name)
         self.__files.append(file)
+        self.__system_files_controller.create_file(name)
         self.log.info('File with name: ' + name + ' created')
         return file
 
@@ -36,6 +39,7 @@ class DirectoryController:
             self.log.error("Can't remove file " + name + ", it's opened by at least one client")
             raise PermissionError(msg)
         self.__files = [f for f in self.__files if f.get_name() != name]
+        self.__system_files_controller.delete_file(name)
         self.log.info('File with name: ' + name + ' deleted')
         return None
 

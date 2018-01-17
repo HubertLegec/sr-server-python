@@ -31,5 +31,8 @@ class ConfigLoader:
     def get_detector_interval(self):
         return self.config['detectorInterval']
 
+    def get_files_dir(self):
+        return self.config['filesDir']
+
     def __get_all_servers(self):
         return self.config['servers']

@@ -48,12 +48,12 @@ def handle_exist_error(error):
     return response
 
 
-def configure(servers, detector_interval):
+def configure(servers, detector_interval, files_dir):
     global app, app_configured, socketio
     if app_configured:
         return app, socketio
     clients_controller = ClientController(socketio)
-    dir_controller = DirectoryController(clients_controller)
+    dir_controller = DirectoryController(clients_controller, files_dir)
     file_controller = FileController(dir_controller, clients_controller)
     snapshot_builder = SnapshotBuilder(dir_controller)
     deadlock_controller = DeadlockController(file_controller, snapshot_builder, servers, detector_interval)
@@ -95,6 +95,8 @@ def start(params):
     host = configuration.get_server_host()
     port = configuration.get_server_port()
     debug = params.debug
-    app, socketio, deadlock_controller = configure(configuration.get_servers(), configuration.get_detector_interval())
+    app, socketio, deadlock_controller = configure(
+        configuration.get_servers(), configuration.get_detector_interval(), configuration.get_files_dir()
+    )
     deadlock_controller.run()
     socketio.run(app, host, port, debug=debug)
