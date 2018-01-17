@@ -39,6 +39,7 @@ class FileController:
         self.log.info('Updating record #' + str(record_id) + ' in file: ' + filename + ' by user: ' + user_id)
         file = self.directory_controller.get_file(filename)
         file.edit_record(record_id, content, user_id)
+        self.__system_files_controller.update_record(filename, record_id, content)
         self.log.info('Record #' + str(record_id) + ' in file: ' + filename + ' updated by user: ' + user_id)
         self.__notify_clients(
             file, user_id,
@@ -56,6 +57,7 @@ class FileController:
         self.log.info('Deleting record #' + str(record_id) + ' in file: ' + filename + ' by user: ' + user_id)
         file = self.directory_controller.get_file(filename)
         file.delete_record(record_id, user_id)
+        self.__system_files_controller.delete_record(filename, record_id)
         self.log.info('Record #' + str(record_id) + ' in file: ' + filename + ' deleted by user: ' + user_id)
         self.__notify_clients(
             file, user_id, {'eventType': 'RECORD_REMOVED', 'recordId': record_id, 'filename': filename}

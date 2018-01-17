@@ -24,7 +24,7 @@ class Record:
         return self.__locked_by.get_user() if self.__locked_by else None
 
     def set_content(self, content):
-        size = sys.getsizeof(content)
+        size = len(content)
         if size > Record.MAX_RECORD_SIZE:
             raise ValueError("Can't set new value of record #" + str(self.__id) + ", max size exceeded")
         self.__content = content

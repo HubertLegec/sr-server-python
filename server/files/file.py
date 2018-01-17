@@ -83,4 +83,15 @@ class File:
     def __get_next_record_id(self):
         if len(self.__records) == 0:
             return 0
-        return max(map(lambda x: x.get_id(), self.__records)) + 1
+        return self.smallest_not_in_list([r.get_id() for r in self.__records])
+
+    @classmethod
+    def smallest_not_in_list(cls, idx_list):
+        sorted_list = sorted(idx_list)
+        pos = 0
+        for idx in sorted_list:
+            if idx == pos:
+                pos += 1
+            else:
+                return pos
+        return pos
