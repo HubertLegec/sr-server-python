@@ -1,6 +1,6 @@
 from os import path, makedirs, remove, listdir
 
-from server.files import File
+from server.files import File, Record
 from server.utils import LogFactory
 
 
@@ -28,7 +28,29 @@ class SystemFilesController:
 
     def get_all_files(self):
         names = [f for f in listdir(self.__dir_path) if path.isfile(self.__create_file_path(f))]
-        return [File(n) for n in names]
+        return [self.__restore_file(n) for n in names]
+
+    def create_record(self, filename, record):
+        with open(self.__create_file_path(filename), "a") as f:
+            f.write(str(record.get_id()) + ":" + record.get_content() + "\n")
+
+    def __restore_file(self, filename):
+        self.log.info('Restore file: ' + filename)
+        file = File(filename)
+        with open(self.__create_file_path(filename)) as f:
+            content = f.readlines()
+            records = [self.__restore_record(r.strip()) for r in content]
+            file.set_records(records)
+        return file
+
+    @classmethod
+    def __restore_record(cls, line):
+        semicolon_idx = line.index(":")
+        rec_id = int(line[0:semicolon_idx])
+        rec_content = line[semicolon_idx+1:]
+        rec = Record(rec_id)
+        rec.set_content(rec_content)
+        return rec
 
     def __create_file_path(self, filename):
         return path.join(self.__dir_path, filename)

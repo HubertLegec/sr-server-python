@@ -8,6 +8,7 @@ class FileController:
     def __init__(self, directory_controller, clients_controller):
         self.directory_controller = directory_controller
         self.__clients_controller = clients_controller
+        self.__system_files_controller = directory_controller.get_system_files_controller()
 
     def get_records(self, filename):
         file = self.directory_controller.get_file(filename)
@@ -19,6 +20,7 @@ class FileController:
         if len(file.get_records()) >= 1024:
             raise Exception("Max file size (1024 records) exceeded!")
         new_record = file.create_record(content)
+        self.__system_files_controller.create_record(filename, new_record)
         self.log.info('New record #' + str(new_record.get_id()) + ' created in file: ' + filename + ' by user: ' + user_id)
         self.__notify_clients(
             file, user_id,

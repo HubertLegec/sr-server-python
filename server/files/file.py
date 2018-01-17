@@ -39,6 +39,9 @@ class File:
         self.__records.append(record)
         return record
 
+    def set_records(self, records):
+        self.__records = records
+
     def edit_record(self, record_id, content, user_id):
         record = self.get_record(record_id)
         locked_by = record.get_locked_by()

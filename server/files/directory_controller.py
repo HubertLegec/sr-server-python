@@ -56,6 +56,9 @@ class DirectoryController:
         for f in self.get_files():
             f.disconnect_user(user_id)
 
+    def get_system_files_controller(self):
+        return self.__system_files_controller
+
     def __check_if_name_exists(self, name):
         filtered = [f for f in self.__files if f.get_name() == name]
         return len(filtered) > 0
