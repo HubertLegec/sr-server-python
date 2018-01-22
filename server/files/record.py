@@ -50,9 +50,10 @@ class Record:
 
     def disconnect_user(self, user_id):
         if self.get_locked_by() == user_id:
-            self.unlock(user_id)
+            return self.unlock(user_id)
         else:
             self.__lock_queue.remove_by(lambda u: u.get_user() == user_id)
+            return None
 
     def get_waiting_users(self):
         return [u for u in self.__lock_queue.get_as_list()]

@@ -21,8 +21,8 @@ class ClientController:
 
     def emit(self, clients, event_name, event_body=None):
         for client_name in clients:
-            self.log.info('Emit to ' + client_name + ' event ' + event_name)
             client = self.get_client_by_name(client_name)
+            self.log.info('Emit to ' + client.get_login() + ' event ' + event_name)
             self.__socketio.emit(event_name, event_body, room=client.get_login())
 
     def get_client_by_sid(self, sid):

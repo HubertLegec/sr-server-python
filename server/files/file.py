@@ -76,9 +76,13 @@ class File:
 
     def disconnect_user(self, user_id):
         self.log.info("Disconnect user: " + user_id + " from file: " + self.get_name())
+        to_notify = []
         for r in self.get_records():
-            r.disconnect_user(user_id)
+            next_user = r.disconnect_user(user_id)
+            if next_user:
+                to_notify.append((r.get_id(), next_user))
         self.remove_opened_by(user_id)
+        return to_notify
 
     def __get_next_record_id(self):
         if len(self.__records) == 0:

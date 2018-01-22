@@ -54,7 +54,12 @@ class DirectoryController:
     def disconnect_user(self, user_id):
         self.log.info("Disconnecting client from all files...")
         for f in self.get_files():
-            f.disconnect_user(user_id)
+            to_notify = f.disconnect_user(user_id)
+            for entry in to_notify:
+                self.__notify_specified_client(
+                    entry[1],
+                    {'eventType': 'LOCK_ASSIGNED', 'recordId': entry[0], 'filename': f.get_name()}
+                )
 
     def get_system_files_controller(self):
         return self.__system_files_controller
@@ -62,3 +67,10 @@ class DirectoryController:
     def __check_if_name_exists(self, name):
         filtered = [f for f in self.__files if f.get_name() == name]
         return len(filtered) > 0
+
+    def __notify_specified_client(self, user, body):
+        self.__clients_controller.emit(
+            [user],
+            'record_state_change',
+            body
+        )
