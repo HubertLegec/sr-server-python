@@ -20,7 +20,7 @@ app = Flask('File Server')
 CORS(app)
 app.config['SECRET_KEY'] = 'Secret!!!'
 app.config['TRAP_HTTP_EXCEPTIONS'] = True
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='eventlet')
 logger = LogFactory.get_logger()
 
 
@@ -48,15 +48,15 @@ def handle_exist_error(error):
     return response
 
 
-def configure(servers, detector_interval, files_dir):
+def configure(configuration):
     global app, app_configured, socketio
     if app_configured:
         return app, socketio
     clients_controller = ClientController(socketio)
-    dir_controller = DirectoryController(clients_controller, files_dir)
+    dir_controller = DirectoryController(clients_controller, configuration.get_files_dir())
     file_controller = FileController(dir_controller, clients_controller)
     snapshot_builder = SnapshotBuilder(dir_controller)
-    deadlock_controller = DeadlockController(file_controller, snapshot_builder, servers, detector_interval)
+    deadlock_controller = DeadlockController(file_controller, snapshot_builder, configuration)
     handle_exception = app.handle_exception
     handle_user_exception = app.handle_user_exception
     api = Api(app)
@@ -95,8 +95,6 @@ def start(params):
     host = configuration.get_server_host()
     port = configuration.get_server_port()
     debug = params.debug
-    app, socketio, deadlock_controller = configure(
-        configuration.get_servers(), configuration.get_detector_interval(), configuration.get_files_dir()
-    )
+    app, socketio, deadlock_controller = configure(configuration)
     deadlock_controller.run()
     socketio.run(app, host, port, debug=debug)

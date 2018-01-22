@@ -11,20 +11,26 @@ log = LogFactory.get_logger()
 
 
 class DeadlockController:
-    def __init__(self, file_controller, snapshot_builder, servers, interval=10):
-        self.__main_thread = RepeatedTimer(interval, DeadlockController.check_deadlocks, snapshot_builder, servers, file_controller)
+    def __init__(self, file_controller, snapshot_builder, configuration):
+        interval = configuration.get_detector_interval()
+        servers = configuration.get_servers()
+        host = configuration.get_server_host()
+        port = configuration.get_server_port()
+        self.__main_thread = RepeatedTimer(
+            interval, DeadlockController.check_deadlocks, snapshot_builder, servers, file_controller, host, port
+        )
 
     def run(self):
         log.info('Run deadlock detector...')
         self.__main_thread.start()
 
     @staticmethod
-    def check_deadlocks(snapshot_builder, servers, file_controller):
+    def check_deadlocks(snapshot_builder, servers, file_controller, host, port):
         log.info('Check deadlocks...')
         snapshot_uuid = str(uuid.uuid4())
         detector = DeadlockDetector(snapshot_uuid)
         own_snapshot = snapshot_builder.create_snapshot(snapshot_uuid)
-        own_server = {'host': None, 'port': None}
+        own_server = {'host': host, 'port': port}
         detector.add_snapshot(SnapshotDescription(own_snapshot, own_server))
         threads = [Thread(target=DeadlockController.get_snapshot_for_server, args=(s, detector, snapshot_uuid)) for s in servers]
         DeadlockController.run_threads_for_result(threads)
